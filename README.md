@@ -8,3 +8,8 @@ This concept depicted in fabryka_opowiadan.png extends the original task describ
 - controls of AI parameters at various stages of the content generation process
 - store/restore fo all intermediate stages of the content generation process
 - multiiple choices of content version for intermediate stages
+- optional user input from a .TXT file uploaded from a local storage
+
+
+The text processing assumes extraction of the key points like: characters, places, story plots etc. that are subject for futher processing.
+The variations of the story variants or adherence to the specified inputs is controlled with the LLM settings e.g. Temperature parameter. 
