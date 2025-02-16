@@ -3,7 +3,7 @@ from pathlib import Path
 import streamlit as st
 from openai import OpenAI
 from dotenv import dotenv_values
-
+import time
 
 model_pricings = {
     "gpt-4o": {
@@ -46,7 +46,7 @@ def chatbot_reply(user_prompt, memory):
         messages=messages
     )
     usage = {}
-    if response.usage:
+    if response.usage: 
         usage = {
             "completion_tokens": response.usage.completion_tokens,
             "prompt_tokens": response.usage.prompt_tokens,
@@ -96,7 +96,10 @@ def load_conversation_to_state(conversation):
 
 #load current story draft to state 
 def load_story_draft_to_state(story_draft):
-    st.session_state["story_draft"] = story_draft["story_draft"]
+    st.session_state["story_id"] = story_draft["story_id"]
+    st.session_state["story_draft_name"] = story_draft["story_draft_name"]
+    st.session_state["story_draft_messages"] = story_draft["story_draft_messages"]
+    st.session_state["story_draft_chatbot_personality"] = story_draft["story_draft_chatbot_personality"]
 
 
 def load_current_conversation():
@@ -114,7 +117,7 @@ def load_current_conversation():
         }
 
         # tworzymy nową konwersację
-        with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "w") as f:
+        with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
             f.write(json.dumps(conversation, indent=4))
             
 
@@ -130,27 +133,28 @@ def load_current_conversation():
             conversation_id = data["current_conversation_id"]
 
         # wczytujemy konwersację
-        with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "r") as f:
+        with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
             conversation = json.loads(f.read())
 
     load_conversation_to_state(conversation)
     return conversation_id
 
-#Load current story draft
+#Load current story draft 
 def load_current_story_draft(story_id):
     DB_STORY_DRAFT_PATH = DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json"
     if not DB_STORY_DRAFT_PATH.exists():
         
         story_draft = {
-                    "id": story_id,
-                    "name": f"Story {story_id}",
-                    "chatbot_personality": DRAFTER_PERSONALITY,
-                    "messages": [],
+                    "story_id": story_id,
+                    "story_draft_name": f"Story {story_id}",
+                    "story_draft_chatbot_personality": DRAFTER_PERSONALITY,
+                    "story_draft_messages": [],
 
             
-        }
+        } 
+        #time.sleep(1)
         # tworzymy nową konwersację
-        with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "w") as f:
+        with open(DB_STORY_DRAFT_PATH, "w") as f:
             f.write(json.dumps(story_draft, indent=4))
             
 
@@ -163,23 +167,24 @@ def load_current_story_draft(story_id):
         # sprawdzamy, która konwersacja jest aktualna
         #with open(DB_PATH / "story_draft_current.json", "r") as f:
         #    data = json.loads(f.read())
-        #    story_id = data["current_conversation_id"]
+         #   story_id = data["current_story_id"]
 
         # wczytujemy konwersację
         with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "r") as f:
-            story_id = json.loads(f.read())
-
-
+            story_draft = json.loads(f.read())
+        #... 
+    load_story_draft_to_state(story_draft)
+    #st.rerun()
 
 
 def save_current_conversation_messages():
     conversation_id = st.session_state["id"]
     new_messages = st.session_state["messages"]
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "r") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
         conversation = json.loads(f.read())
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "w") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
         f.write(json.dumps({
             **conversation,
             "messages": new_messages,
@@ -196,7 +201,7 @@ def save_current_story_draft_messages():
     with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "w") as f:
         f.write(json.dumps({
             **story_draft,
-            "messages": story_draft_new_messages,
+            "story_draft_messages": story_draft_new_messages,
         }, indent=4))
 
 
@@ -204,10 +209,10 @@ def save_current_conversation_name():
     conversation_id = st.session_state["id"]
     new_conversation_name = st.session_state["new_conversation_name"]
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "r") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
         conversation = json.loads(f.read())
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "w") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
         f.write(json.dumps({
             **conversation,
             "name": new_conversation_name,
@@ -224,17 +229,17 @@ def save_current_story_draft_name():
     with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "w") as f:
         f.write(json.dumps({
             **story_draft,
-            "name": new_story_draft_name,
+            "story_draft_name": new_story_draft_name,
         }, indent=4))
 
 def save_current_conversation_personality():
     conversation_id = st.session_state["id"]
     new_chatbot_personality = st.session_state["new_chatbot_personality"]
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "r") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
         conversation = json.loads(f.read())
 
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "w") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
         f.write(json.dumps({
             **conversation,
             "chatbot_personality": new_chatbot_personality,
@@ -250,7 +255,7 @@ def save_current_story_draft_personality():
     with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "w") as f:
         f.write(json.dumps({
             **story_draft,
-            "chatbot_personality": story_draft_new_chatbot_personality,
+            "story_draft_chatbot_personality": story_draft_new_chatbot_personality,
         }, indent=4))
 
 def create_new_conversation():
@@ -274,7 +279,7 @@ def create_new_conversation():
     }
 
     # tworzymy nową konwersację
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "w") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
         f.write(json.dumps(conversation, indent=4))
 
     # która od razu staje się aktualną
@@ -294,10 +299,10 @@ def create_new_story_draft():
         story_draft_personality = st.session_state["story_draft_chatbot_personality"]
 
     story_draft = {
-        "id": story_id,
-        "name": f"Story {story_id}",
-        "chatbot_personality": story_draft_personality,
-        "messages": [],
+        "story_id": story_id,
+        "story_draft_name": f"Story {story_id}",
+        "story_draft_chatbot_personality": story_draft_personality,
+        "story_draft_messages": [],
     }
 
     # tworzymy nową konwersację
@@ -314,7 +319,7 @@ def create_new_story_draft():
     st.rerun()
 
 def switch_conversation(conversation_id):
-    with open(DB_CONVERSATIONS_PATH / f"{conversation_id}.json", "r") as f:
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
         conversation = json.loads(f.read())
 
     with open(DB_PATH / "current.json", "w") as f:
@@ -330,7 +335,7 @@ def switch_story_draft(story_id):
     with open(DB_CONVERSATIONS_PATH / f"story_draft_{story_id}.json", "r") as f:
         story_draft = json.loads(f.read())
 
-    with open(DB_PATH / "current.json", "w") as f:
+    with open(DB_PATH / "story_draft_current.json", "w") as f:
         f.write(json.dumps({
             "current_story_id": story_id,
         }, indent=4))
@@ -340,7 +345,7 @@ def switch_story_draft(story_id):
 
 def list_conversations():
     conversations = []
-    for p in DB_CONVERSATIONS_PATH.glob("*.json"):
+    for p in DB_CONVERSATIONS_PATH.glob("conversation_*.json"):
         with open(p, "r") as f:
             conversation = json.loads(f.read())
             conversations.append({
@@ -352,22 +357,22 @@ def list_conversations():
 
 def list_story_draft():
     story_drafts = []
-    for p in DB_CONVERSATIONS_PATH.glob("*.json"):
+    for p in DB_CONVERSATIONS_PATH.glob("story_draft_*.json"):
         with open(p, "r") as f:
             story_draft = json.loads(f.read())
             story_drafts.append({
-                "id": story_draft["id"],
-                "name": story_draft["name"],
+                "story_id": story_draft["story_id"],
+                "story_draft_name": story_draft["story_draft_name"],
             })
 
-    return conversations
+    return story_draft
 
 
 #
 # MAIN PROGRAM
 #
 story_id=load_current_conversation()
-#load_current_story_draft(story_id)
+load_current_story_draft(story_id)
 PROGRAM_NAME="Fabryka Opowiadań"
 st.title(f":books: {PROGRAM_NAME}")
 
