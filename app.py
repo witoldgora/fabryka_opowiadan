@@ -4,6 +4,7 @@ import streamlit as st
 from openai import OpenAI
 from dotenv import dotenv_values
 import time
+ 
 
 model_pricings = {
     "gpt-4o": {
@@ -20,10 +21,35 @@ USD_TO_PLN = 3.97
 PRICING = model_pricings[MODEL]
 
 env = dotenv_values(".env")
-
+ 
 openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])
 
-#
+#read in program dictionary
+def load_language_settings():
+    with open('dictionary.json') as json_file:
+        data = json.load(json_file)
+        language = data['language']
+        #llm_model = data['llm_model']
+        dictionary = data['dictionaries'][language]
+        return dictionary, language 
+ 
+#read in program conversation defaults
+def load_conversation_defaults():
+    with open('defaults.json') as json_file:
+        data = json.load(json_file)
+        defaults = data['conversation']
+        
+        return defaults
+    
+#read in program story_draft defaults
+def load_story_draft_defaults():
+    with open('defaults.json') as json_file:
+        data = json.load(json_file)
+        defaults = data['story_draft']
+        
+        return defaults
+ 
+# 
 # CHATBOT
 #
 def chatbot_reply(user_prompt, memory):
@@ -58,18 +84,26 @@ def chatbot_reply(user_prompt, memory):
         "content": response.choices[0].message.content,
         "usage": usage,
     }
-
+ 
 #
 # CONVERSATION HISTORY AND DATABASE
 #
-DEFAULT_PERSONALITY = """
-Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika.
-Odpowiadaj na pytania w sposób zwięzły i zrozumiały.
-""".strip()
+##DEFAULT_CONVERSATION_PERSONALITY = """
+#Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika.
+#Odpowiadaj na pytania w sposób zwięzły i zrozumiały.
+#""".strip()
 
-DRAFTER_PERSONALITY="""
-Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki.
-""".strip()
+DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults()["DEFAULT_CONVERSATION_PERSONALITY"].strip()
+
+
+
+#DEFAULT_STORY_DRAFT_PERSONALITY="""
+#Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki.
+#""".strip()
+
+
+DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults()["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
+ 
 
 DB_PATH = Path("db")
 DB_CONVERSATIONS_PATH = DB_PATH / "conversations"
@@ -110,7 +144,7 @@ def load_current_conversation():
         conversation = {
             "id": conversation_id,
             "name": "Konwersacja 1",
-            "chatbot_personality": DEFAULT_PERSONALITY,
+            "chatbot_personality": DEFAULT_CONVERSATION_PERSONALITY,
             "messages": [],
 
             
@@ -147,7 +181,7 @@ def load_current_story_draft(story_id):
         story_draft = {
                     "id": story_id,
                     "name": f"Story {story_id}",
-                    "chatbot_personality": DRAFTER_PERSONALITY,
+                    "chatbot_personality": DEFAULT_STORY_DRAFT_PERSONALITY,
                     "messages": [],
 
             
@@ -267,7 +301,7 @@ def create_new_conversation():
     # conversation_ids zawiera wszystkie ID konwersacji
     # następna konwersacja będzie miała ID o 1 większe niż największe ID z listy
     conversation_id = max(conversation_ids) + 1
-    personality = DEFAULT_PERSONALITY
+    personality = DEFAULT_CONVERSATION_PERSONALITY
     if "chatbot_personality" in st.session_state and st.session_state["chatbot_personality"]:
         personality = st.session_state["chatbot_personality"]
 
@@ -294,7 +328,7 @@ def create_new_conversation():
 def create_new_story_draft():
     
     story_id=conversation_id
-    story_draft_personality = DRAFTER_PERSONALITY
+    story_draft_personality = DEFAULT_STORY_DRAFT_PERSONALITY
     if "story_draft_chatbot_personality" in st.session_state and st.session_state["story_draft_chatbot_personality"]:
         story_draft_personality = st.session_state["story_draft_chatbot_personality"]
 
@@ -371,15 +405,25 @@ def list_story_draft():
 #
 # MAIN PROGRAM
 #
+
+dictionary, program_language =load_language_settings()
+
+
+AUTHOR_INPUTS = dictionary['AUTHOR_INPUTS']
+TITLE_AND_PLOTS = dictionary['TITLE_AND_PLOTS']
+SCENES = dictionary['SCENES']
+
 story_id=load_current_conversation()
 load_current_story_draft(story_id)
 PROGRAM_NAME="Fabryka Opowiadań"
 st.title(f":books: {PROGRAM_NAME}")
 
 #Tas start here
-AUTHOR_INPUTS="Szkic opowieści"
-TITLE_AND_PLOTS="Tytuł i zarys fabuły"
-SCENES="Sceny"
+#AUTHOR_INPUTS="Szkic opowieści"
+#TITLE_AND_PLOTS="Tytuł i zarys fabuły"
+#SCENES="Sceny"
+
+
 author_inputs, title_and_plots, scenes = st.tabs([AUTHOR_INPUTS, TITLE_AND_PLOTS, SCENES])
 
 with author_inputs:
@@ -390,7 +434,7 @@ with author_inputs:
     uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
    
 
-
+ 
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])

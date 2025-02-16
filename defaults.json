@@ -1,0 +1,11 @@
+{
+    "conversation":{
+        "DEFAULT_CONVERSATION_PERSONALITY": "Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika. Odpowiadaj na pytania w sposób zwięzły i zrozumiały."
+    },
+    
+    "story_draft":{
+
+        "DEFAULT_STORY_DRAFT_PERSONALITY": "Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki."
+
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "language": "polski",
+    "llm_model":"gpt-4o-mini",
+    "dictionaries": {
+        "polski": {
+            "AUTHOR_INPUTS": "Szkic opowieści",
+            "TITLE_AND_PLOTS": "Tytuł i zarys fabuły",
+            "SCENES": "Sceny"
+        },
+        "English": {
+            "AUTHOR_INPUTS": "Story Sketch",
+            "TITLE_AND_PLOTS": "Title and Plot Overview",
+            "SCENES": "Scenes"
+        }
+    }
+}
