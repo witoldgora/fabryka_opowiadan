@@ -3,8 +3,10 @@ from pathlib import Path
 import streamlit as st
 from openai import OpenAI
 from dotenv import dotenv_values
+import pandas as pd
 import time
- 
+
+AUTHOR_INPUTS=...
 
 model_pricings = {
     "gpt-4o": {
@@ -28,28 +30,34 @@ openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])
 def load_language_settings():
     with open('dictionary.json') as json_file:
         data = json.load(json_file)
-        language = data['language']
-        #llm_model = data['llm_model']
+        language = data.get("language", "")
         dictionary = data['dictionaries'][language]
-        return dictionary, language 
- 
-#read in program conversation defaults
-def load_conversation_defaults():
+        languages = data.get("dictionaries", {}).keys()
+        return dictionary, language, languages 
+
+def load_language_default():
     with open('defaults.json') as json_file:
         data = json.load(json_file)
-        defaults = data['conversation']
+        language = data.get("language", "")
+        return language
+ 
+#read in program conversation defaults
+def load_conversation_defaults(language):
+    with open('defaults.json') as json_file:
+        data = json.load(json_file)
+        defaults = data['conversation'][language]
         
         return defaults
     
 #read in program story_draft defaults
-def load_story_draft_defaults():
+def load_story_draft_defaults(language):
     with open('defaults.json') as json_file:
         data = json.load(json_file)
-        defaults = data['story_draft']
+        defaults = data['story_draft'][language]
         
         return defaults
- 
-# 
+  
+#  
 # CHATBOT
 #
 def chatbot_reply(user_prompt, memory):
@@ -93,16 +101,7 @@ def chatbot_reply(user_prompt, memory):
 #Odpowiadaj na pytania w sposób zwięzły i zrozumiały.
 #""".strip()
 
-DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults()["DEFAULT_CONVERSATION_PERSONALITY"].strip()
 
-
-
-#DEFAULT_STORY_DRAFT_PERSONALITY="""
-#Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki.
-#""".strip()
-
-
-DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults()["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
  
 
 DB_PATH = Path("db")
@@ -406,8 +405,9 @@ def list_story_draft():
 # MAIN PROGRAM
 #
 
-dictionary, program_language =load_language_settings()
-
+dictionary, program_language, program_languages =load_language_settings()
+DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
+DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults(program_language)["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
 
 AUTHOR_INPUTS = dictionary['AUTHOR_INPUTS']
 TITLE_AND_PLOTS = dictionary['TITLE_AND_PLOTS']
@@ -418,14 +418,9 @@ load_current_story_draft(story_id)
 PROGRAM_NAME="Fabryka Opowiadań"
 st.title(f":books: {PROGRAM_NAME}")
 
-#Tas start here
-#AUTHOR_INPUTS="Szkic opowieści"
-#TITLE_AND_PLOTS="Tytuł i zarys fabuły"
-#SCENES="Sceny"
-
 
 author_inputs, title_and_plots, scenes = st.tabs([AUTHOR_INPUTS, TITLE_AND_PLOTS, SCENES])
-
+ 
 with author_inputs:
     st.header(AUTHOR_INPUTS)
 
@@ -454,6 +449,12 @@ if prompt:
     save_current_conversation_messages()
 
 with st.sidebar:
+   
+   #select language  
+    
+    program_language = st.selectbox(f"{dictionary['FLAG']} Wybierz język", program_languages, index=list(program_languages).index(program_language))
+   
+
     st.subheader("Aktualna konwersacja")
     total_cost = 0
     for message in st.session_state.get("messages") or []:

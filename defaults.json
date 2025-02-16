@@ -1,11 +1,31 @@
 {
-    "conversation":{
-        "DEFAULT_CONVERSATION_PERSONALITY": "Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika. Odpowiadaj na pytania w sposób zwięzły i zrozumiały."
+    "language": "polski",
+    "conversation": {
+        "polski":
+        {
+            "DEFAULT_CONVERSATION_PERSONALITY":"Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika. Odpowiadaj na pytania w sposób zwięzły i zrozumiały."
+
+        },
+        "English":{
+
+ 
+            "DEFAULT_CONVERSATION_PERSONALITY":  "You are an assistant that answers all user questions. Answer questions in a concise and understandable manner."         
+        }
+        
     },
-    
-    "story_draft":{
+    "story_draft": {
 
-        "DEFAULT_STORY_DRAFT_PERSONALITY": "Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki."
+        "polski":
+        {
+            "DEFAULT_STORY_DRAFT_PERSONALITY":"Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki."
 
+        },
+        "English":{
+
+ 
+            "DEFAULT_STORY_DRAFT_PERSONALITY": "You are a writer's assistant that helps come up with a good title and convert the draft story into a chapter plan, identify key characters and threads."        
+        }
+
+      
     }
 }

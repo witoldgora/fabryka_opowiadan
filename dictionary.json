@@ -1,16 +1,26 @@
 {
     "language": "polski",
-    "llm_model":"gpt-4o-mini",
+    "llm_model": "gpt-4o-mini",
     "dictionaries": {
         "polski": {
+            "FLAG": ":flag-pl:",
+            "PROGRAM_NAME":"Fabryka Opowiadań",
             "AUTHOR_INPUTS": "Szkic opowieści",
             "TITLE_AND_PLOTS": "Tytuł i zarys fabuły",
-            "SCENES": "Sceny"
+            "SCENES": "Sceny",
+            "DEFAULT_CONVERSATION_PERSONALITY":"Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika. Odpowiadaj na pytania w sposób zwięzły i zrozumiały.",
+            "DEFAULT_STORY_DRAFT_PERSONALITY":"Jesteś pomocnikiem piarza, który pomaga wymyślić dobry tytuł i  zamienić draft opowieści na plan rozdziałów, zidentyfikowacć kluczowe postacie i wątki."
+
         },
         "English": {
+            "FLAG": ":flag-en:",
+            "PROGRAM_NAME":"Story Factory",
             "AUTHOR_INPUTS": "Story Sketch",
             "TITLE_AND_PLOTS": "Title and Plot Overview",
-            "SCENES": "Scenes"
+            "SCENES": "Scenes",
+            "DEFAULT_CONVERSATION_PERSONALITY":  "You are an assistant that answers all user questions. Answer questions in a concise and understandable manner.",
+            "DEFAULT_STORY_DRAFT_PERSONALITY": "You are a writer's assistant that helps come up with a good title and convert the draft story into a chapter plan, identify key characters and threads."
         }
+
     }
 }
