@@ -6,6 +6,7 @@ from dotenv import dotenv_values
 import pandas as pd
 import time
 
+
 AUTHOR_INPUTS=...
 
 model_pricings = {
@@ -25,22 +26,22 @@ PRICING = model_pricings[MODEL]
 env = dotenv_values(".env")
  
 openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])
-
+ 
 #read in program dictionary
-def load_language_settings():
+def load_language_settings(language):
     with open('dictionary.json') as json_file:
         data = json.load(json_file)
-        language = data.get("language", "")
+        #language = data.get("language", "")
         dictionary = data['dictionaries'][language]
         languages = data.get("dictionaries", {}).keys()
-        return dictionary, language, languages 
+        return dictionary, languages 
 
 def load_language_default():
     with open('defaults.json') as json_file:
         data = json.load(json_file)
         language = data.get("language", "")
         return language
- 
+  
 #read in program conversation defaults
 def load_conversation_defaults(language):
     with open('defaults.json') as json_file:
@@ -93,15 +94,6 @@ def chatbot_reply(user_prompt, memory):
         "usage": usage,
     }
  
-#
-# CONVERSATION HISTORY AND DATABASE
-#
-##DEFAULT_CONVERSATION_PERSONALITY = """
-#Jesteś pomocnikiem, który odpowiada na wszystkie pytania użytkownika.
-#Odpowiadaj na pytania w sposób zwięzły i zrozumiały.
-#""".strip()
-
-
  
 
 DB_PATH = Path("db")
@@ -119,6 +111,14 @@ DB_SESSIONS_PATH = DB_PATH / "sessions"
 # │   ├── 1.json
 # │   ├── 2.json
 # │   └── ...  
+def get_program_language():
+    #if not st.session_state["program_language"]:
+     #   language = 
+
+
+    return language
+
+
 
 def load_conversation_to_state(conversation):
     st.session_state["id"] = conversation["id"]
@@ -142,7 +142,7 @@ def load_current_conversation():
         conversation_id = 1
         conversation = {
             "id": conversation_id,
-            "name": "Konwersacja 1",
+            "name": f"{SESSION} 1",
             "chatbot_personality": DEFAULT_CONVERSATION_PERSONALITY,
             "messages": [],
 
@@ -294,19 +294,27 @@ def save_current_story_draft_personality():
 def create_new_conversation():
     # poszukajmy ID dla naszej kolejnej konwersacji
     conversation_ids = []
-    for p in DB_CONVERSATIONS_PATH.glob("*.json"):
-        conversation_ids.append(int(p.stem))
+    for p in DB_CONVERSATIONS_PATH.glob("conversation_*.json"):
+        #conversation_ids.append(int(p.stem))
+
+
+        conversation_num = p.stem.split('_')[1]
+        conversation_ids.append(int(conversation_num))
 
     # conversation_ids zawiera wszystkie ID konwersacji
     # następna konwersacja będzie miała ID o 1 większe niż największe ID z listy
     conversation_id = max(conversation_ids) + 1
     personality = DEFAULT_CONVERSATION_PERSONALITY
-    if "chatbot_personality" in st.session_state and st.session_state["chatbot_personality"]:
-        personality = st.session_state["chatbot_personality"]
+    #if "chatbot_personality" in st.session_state and st.session_state["chatbot_personality"]:
+    #    personality = st.session_state["chatbot_personality"]
+    
 
+    print(f"2. {personality}")
+    
+    
     conversation = {
         "id": conversation_id,
-        "name": f"Konwersacja {conversation_id}",
+        "name": f"{SESSION} {conversation_id}",
         "chatbot_personality": personality,
         "messages": [],
     }
@@ -330,7 +338,7 @@ def create_new_story_draft():
     story_draft_personality = DEFAULT_STORY_DRAFT_PERSONALITY
     if "story_draft_chatbot_personality" in st.session_state and st.session_state["story_draft_chatbot_personality"]:
         story_draft_personality = st.session_state["story_draft_chatbot_personality"]
-
+    print(f"3. {DEFAULT_STORY_DRAFT_PERSONALITY}")
     story_draft = {
         "id": story_id,
         "name": f"Story {story_id}",
@@ -404,18 +412,34 @@ def list_story_draft():
 #
 # MAIN PROGRAM
 #
+DEFAULT_PROGRAM_LANGUAGE=load_language_default()
+program_language = DEFAULT_PROGRAM_LANGUAGE
 
-dictionary, program_language, program_languages =load_language_settings()
+dictionary, program_languages =load_language_settings(program_language)
 DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
+st.write(DEFAULT_CONVERSATION_PERSONALITY)
 DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults(program_language)["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
-
+st.write(DEFAULT_STORY_DRAFT_PERSONALITY)
 AUTHOR_INPUTS = dictionary['AUTHOR_INPUTS']
 TITLE_AND_PLOTS = dictionary['TITLE_AND_PLOTS']
 SCENES = dictionary['SCENES']
+PROGRAM_NAME=dictionary["PROGRAM_NAME"]
+SELECT_LANGUAGE = dictionary["SELECT_LANGUAGE"]
+CURRENT_SESSION = dictionary["CURRENT_SESSION"]
+SESSION_NAME = dictionary["SESSION_NAME"]
+SESSION_COST_USD = dictionary["SESSION_COST_USD"]
+SESSION_COST_PLN = dictionary["SESSION_COST_PLN"]
+CHATBOT_PERSONALITY = dictionary["CHATBOT_PERSONALITY"]
+SESSION_LIST = dictionary["SESSION_LIST"]
+NEW_SESSION = dictionary["NEW_SESSION"]
+LOAD = dictionary["LOAD"]
+SESSION = dictionary["SESSION"]
+LOAD_FILE_PROMPT = dictionary["LOAD_FILE_PROMPT"]
+LOAD_FILE_HELP = dictionary["LOAD_FILE_HELP"]
 
 story_id=load_current_conversation()
 load_current_story_draft(story_id)
-PROGRAM_NAME="Fabryka Opowiadań"
+
 st.title(f":books: {PROGRAM_NAME}")
 
 
@@ -424,12 +448,12 @@ author_inputs, title_and_plots, scenes = st.tabs([AUTHOR_INPUTS, TITLE_AND_PLOTS
 with author_inputs:
     st.header(AUTHOR_INPUTS)
 
-    LOAD_FILE_PROMPT="Załaduj plik tekstowy z dysku lokalnego"
-    LOAD_FILE_HELP="Nowy plik nadpisze zawartość szkicu"
+    #LOAD_FILE_PROMPT="Załaduj plik tekstowy z dysku lokalnego"
+    #LOAD_FILE_HELP="Nowy plik nadpisze zawartość szkicu"
     uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
-   
-
+    
  
+  
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -451,32 +475,32 @@ if prompt:
 with st.sidebar:
    
    #select language  
-    
-    program_language = st.selectbox(f"{dictionary['FLAG']} Wybierz język", program_languages, index=list(program_languages).index(program_language))
+     
+    program_language = st.selectbox(f"{dictionary['FLAG']} {SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
    
 
-    st.subheader("Aktualna konwersacja")
+    st.subheader(CURRENT_SESSION)
     total_cost = 0
     for message in st.session_state.get("messages") or []:
         if "usage" in message:
             total_cost += message["usage"]["prompt_tokens"] * PRICING["input_tokens"]
             total_cost += message["usage"]["completion_tokens"] * PRICING["output_tokens"]
 
-    c0, c1 = st.columns(2)
-    with c0:
-        st.metric("Koszt rozmowy (USD)", f"${total_cost:.4f}")
-
+    c0, c1 = st.columns(2) 
+    with c0: 
+        st.metric(SESSION_COST_USD, f"${total_cost:.4f}") 
+  
     with c1:
-        st.metric("Koszt rozmowy (PLN)", f"{total_cost * USD_TO_PLN:.4f}")
+        st.metric(SESSION_COST_PLN, f"{total_cost * USD_TO_PLN:.4f}")
 
     st.session_state["name"] = st.text_input(
-        "Nazwa konwersacji",
-        value=st.session_state["name"],
+        SESSION_NAME,
+        value=st.session_state["name"], 
         key="new_conversation_name",
         on_change=save_current_conversation_name,
     )
     st.session_state["chatbot_personality"] = st.text_area(
-        "Osobowość chatbota",
+        CHATBOT_PERSONALITY,
         max_chars=5000,
         height=200,
         value=st.session_state["chatbot_personality"],
@@ -484,8 +508,8 @@ with st.sidebar:
         on_change=save_current_conversation_personality,
     )
 
-    st.subheader("Konwersacje")
-    if st.button("Nowa konwersacja"):
+    st.subheader(SESSION_LIST)
+    if st.button(NEW_SESSION):
         create_new_conversation()
 
     # pokazujemy tylko top 5 konwersacji
@@ -497,5 +521,5 @@ with st.sidebar:
             st.write(conversation["name"])
 
         with c1:
-            if st.button("załaduj", key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
+            if st.button(LOAD, key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
                 switch_conversation(conversation["id"])
