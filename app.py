@@ -124,6 +124,7 @@ def load_conversation_to_state(conversation):
     st.session_state["id"] = conversation["id"]
     st.session_state["name"] = conversation["name"]
     st.session_state["messages"] = conversation["messages"]
+    st.session_state["program_language"] = conversation["language"]
     st.session_state["chatbot_personality"] = conversation["chatbot_personality"]
 
 
@@ -143,6 +144,7 @@ def load_current_conversation():
         conversation = {
             "id": conversation_id,
             "name": f"{SESSION} 1",
+            "language": program_language,
             "chatbot_personality": DEFAULT_CONVERSATION_PERSONALITY,
             "messages": [],
 
@@ -251,6 +253,18 @@ def save_current_conversation_name():
             "name": new_conversation_name,
         }, indent=4))
 
+def save_current_conversation_language():
+    conversation_id = st.session_state["id"]
+    new_conversation_language = st.session_state["program_language"]
+
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
+        conversation = json.loads(f.read())
+
+    with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "w") as f:
+        f.write(json.dumps({
+            **conversation,
+            "language": new_conversation_language,
+        }, indent=4))
 
 def save_current_story_draft_name():
     story_id = st.session_state["id"]
@@ -315,6 +329,7 @@ def create_new_conversation():
     conversation = {
         "id": conversation_id,
         "name": f"{SESSION} {conversation_id}",
+        "language": program_language,
         "chatbot_personality": personality,
         "messages": [],
     }
@@ -410,16 +425,21 @@ def list_story_draft():
 
 
 #
-# MAIN PROGRAM
+# MAIN PROGRAM 
 #
 DEFAULT_PROGRAM_LANGUAGE=load_language_default()
-program_language = DEFAULT_PROGRAM_LANGUAGE
+if "program_language" not in st.session_state:
+    program_language = DEFAULT_PROGRAM_LANGUAGE
+    st.session_state["program_language"]=program_language
+else:
+    program_language = st.session_state["program_language"]
+
+
 
 dictionary, program_languages =load_language_settings(program_language)
+
 DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
-st.write(DEFAULT_CONVERSATION_PERSONALITY)
 DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults(program_language)["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
-st.write(DEFAULT_STORY_DRAFT_PERSONALITY)
 AUTHOR_INPUTS = dictionary['AUTHOR_INPUTS']
 TITLE_AND_PLOTS = dictionary['TITLE_AND_PLOTS']
 SCENES = dictionary['SCENES']
@@ -436,6 +456,7 @@ LOAD = dictionary["LOAD"]
 SESSION = dictionary["SESSION"]
 LOAD_FILE_PROMPT = dictionary["LOAD_FILE_PROMPT"]
 LOAD_FILE_HELP = dictionary["LOAD_FILE_HELP"]
+FLAG = dictionary["FLAG"]
 
 story_id=load_current_conversation()
 load_current_story_draft(story_id)
@@ -447,13 +468,29 @@ author_inputs, title_and_plots, scenes = st.tabs([AUTHOR_INPUTS, TITLE_AND_PLOTS
  
 with author_inputs:
     st.header(AUTHOR_INPUTS)
-
-    #LOAD_FILE_PROMPT="Załaduj plik tekstowy z dysku lokalnego"
-    #LOAD_FILE_HELP="Nowy plik nadpisze zawartość szkicu"
     uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
     
+    if uploaded_file is not None:
+    # Odczytaj zawartość pliku
+        content = uploaded_file.read().decode("utf-8")
+    # Wyświetl zawartość pliku
+        st.text_area("Zawartość pliku:", value=content, height=300)
  
   
+    uploaded_files = st.file_uploader(LOAD_FILE_PROMPT, type='txt', help=LOAD_FILE_HELP, accept_multiple_files=True)
+
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            # Wyświetl nazwę pliku
+            st.write(f"**Załadowany plik:** {uploaded_file.name}")
+
+            # Zainicjalizuj przycisk do wyświetlenia zawartości
+            if st.button(f"Pokaż zawartość {uploaded_file.name}"):
+                # Odczytaj zawartość pliku
+                content = uploaded_file.read().decode("utf-8")
+                # Wyświetl zawartość pliku w nowym oknie (tekście)
+                st.text_area(f"Zawartość pliku: {uploaded_file.name}", value=content, height=300)
+
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -473,13 +510,13 @@ if prompt:
     save_current_conversation_messages()
 
 with st.sidebar:
-   
+    st.subheader(CURRENT_SESSION)
    #select language  
      
-    program_language = st.selectbox(f"{dictionary['FLAG']} {SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
-   
+    program_language = st.selectbox(f"{FLAG} {SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
+  
 
-    st.subheader(CURRENT_SESSION)
+    
     total_cost = 0
     for message in st.session_state.get("messages") or []:
         if "usage" in message:
@@ -490,8 +527,8 @@ with st.sidebar:
     with c0: 
         st.metric(SESSION_COST_USD, f"${total_cost:.4f}") 
   
-    with c1:
-        st.metric(SESSION_COST_PLN, f"{total_cost * USD_TO_PLN:.4f}")
+    #with c1:
+    #    st.metric(SESSION_COST_PLN, f"{total_cost * USD_TO_PLN:.4f}")
 
     st.session_state["name"] = st.text_input(
         SESSION_NAME,
@@ -508,6 +545,9 @@ with st.sidebar:
         on_change=save_current_conversation_personality,
     )
 
+
+
+
     st.subheader(SESSION_LIST)
     if st.button(NEW_SESSION):
         create_new_conversation()
@@ -523,3 +563,10 @@ with st.sidebar:
         with c1:
             if st.button(LOAD, key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
                 switch_conversation(conversation["id"])
+
+
+
+if st.session_state["program_language"] != program_language:
+    st.session_state["program_language"] = program_language
+    save_current_conversation_language()
+    st.rerun()
