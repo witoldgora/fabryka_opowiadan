@@ -323,7 +323,7 @@ def create_new_conversation():
     #    personality = st.session_state["chatbot_personality"]
     
 
-    print(f"2. {personality}")
+    
     
     
     conversation = {
@@ -353,7 +353,7 @@ def create_new_story_draft():
     story_draft_personality = DEFAULT_STORY_DRAFT_PERSONALITY
     if "story_draft_chatbot_personality" in st.session_state and st.session_state["story_draft_chatbot_personality"]:
         story_draft_personality = st.session_state["story_draft_chatbot_personality"]
-    print(f"3. {DEFAULT_STORY_DRAFT_PERSONALITY}")
+    
     story_draft = {
         "id": story_id,
         "name": f"Story {story_id}",
@@ -514,7 +514,16 @@ with st.sidebar:
    #select language  
      
     program_language = st.selectbox(f"{FLAG} {SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
-  
+   
+    # Nowa sekcja do wyboru modelu AI
+    available_models = list(model_pricings.keys())  # Lista dostępnych modeli
+    selected_model = st.selectbox("Wybierz model AI", available_models, index=available_models.index("gpt-4o-mini"))
+
+    # Ustawienie modelu na podstawie wyboru użytkownika
+    MODEL = selected_model
+    PRICING = model_pricings[MODEL]  # Aktualizuj PRICING na podstawie wybranego modelu
+
+   
 
     
     total_cost = 0
@@ -530,23 +539,48 @@ with st.sidebar:
     #with c1:
     #    st.metric(SESSION_COST_PLN, f"{total_cost * USD_TO_PLN:.4f}")
 
+
+    # st.session_state["chatbot_personality"] = st.text_area(
+    #     CHATBOT_PERSONALITY,
+    #     max_chars=5000,
+    #     height=200,
+    #     value=st.session_state["chatbot_personality"],
+    #     key="new_chatbot_personality",
+    #     on_change=save_current_conversation_personality,
+    # )
+
+# # Przycisk resetujący osobowość chatbota
+#     if st.button("Resetuj osobowość chatbota"):
+#         default_personality = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
+#         st.session_state["chatbot_personality"] = default_personality
+#         save_current_conversation_personality()
+#         st.success("Osobowość chatbota została zresetowana.")
+
+# Przycisk resetujący osobowość chatbota
+    if st.button("Resetuj osobowość chatbota"):
+        default_personality = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
+        st.session_state["chatbot_personality"] = default_personality
+        # Bezpośrednio zaktualizuj wartość w text_area
+        st.session_state["new_chatbot_personality"] = default_personality
+        save_current_conversation_personality()
+        st.success("Osobowość chatbota została zresetowana.")
+        st.rerun()
+
+    st.session_state["chatbot_personality"] = st.text_area(
+        CHATBOT_PERSONALITY,
+        max_chars=5000,
+        height=200,
+        value=st.session_state.get("new_chatbot_personality", st.session_state["chatbot_personality"]),
+        key="new_chatbot_personality",
+        on_change=save_current_conversation_personality,
+    )
+
     st.session_state["name"] = st.text_input(
         SESSION_NAME,
         value=st.session_state["name"], 
         key="new_conversation_name",
         on_change=save_current_conversation_name,
     )
-    st.session_state["chatbot_personality"] = st.text_area(
-        CHATBOT_PERSONALITY,
-        max_chars=5000,
-        height=200,
-        value=st.session_state["chatbot_personality"],
-        key="new_chatbot_personality",
-        on_change=save_current_conversation_personality,
-    )
-
-
-
 
     st.subheader(SESSION_LIST)
     if st.button(NEW_SESSION):
