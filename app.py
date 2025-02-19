@@ -5,9 +5,77 @@ from openai import OpenAI
 from dotenv import dotenv_values
 import pandas as pd
 import time
+import requests
+from bs4 import BeautifulSoup
+
+MAX_MESSAGES = None
+def chatbot_reply_with_context(user_prompt, context, memory):
+    # dodaj system message
+    messages = [
+        {
+            "role": "system",
+            "content": st.session_state["chatbot_personality"],
+        },
+    ]
+
+    # dodaj kontekst
+    if context:
+        messages.append({"role": "system", "content": context})
 
 
-AUTHOR_INPUTS=...
+
+    # dodaj wszystkie wiadomości z pamięci
+    for message in memory:
+        messages.append({"role": message["role"], "content": message["content"]})
+
+    # dodaj wiadomość użytkownika
+    messages.append({"role": "user", "content": user_prompt})
+
+    response = openai_client.chat.completions.create(
+        model=MODEL,
+        messages=messages
+    )
+    usage = {}
+    if response.usage: 
+        usage = {
+            "completion_tokens": response.usage.completion_tokens,
+            "prompt_tokens": response.usage.prompt_tokens,
+            "total_tokens": response.usage.total_tokens,
+        }
+
+    return {
+        "role": "assistant",
+        "content": response.choices[0].message.content,
+        "usage": usage,
+    }
+
+def read_website(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Sprawdza, czy zapytanie zakończyło się sukcesem
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Znajdź wszystkie akapity i dołącz ich tekst
+        paragraphs = soup.find_all('p')
+        content = ' '.join([p.get_text() for p in paragraphs])
+        return content, url  # Zwróć treść i URL
+    except requests.exceptions.RequestException as e:
+        return f"Error fetching the website: {e}", None  # Zwróć błąd i None dla URL
+
+# def read_website(url):
+#     try:
+#         response = requests.get(url)
+#         response.raise_for_status()  # Sprawdza, czy zapytanie zakończyło się sukcesem
+#         soup = BeautifulSoup(response.text, 'html.parser')
+
+#         # Znajdź wszystkie akapity i dołącz ich tekst
+#         paragraphs = soup.find_all('p')
+#         content = ' '.join([p.get_text() for p in paragraphs])
+#         return content
+#     except requests.exceptions.RequestException as e:
+#         return f"Error fetching the website: {e}"
+
+#AUTHOR_INPUTS=...
 
 model_pricings = {
     "gpt-4o": {
@@ -441,6 +509,7 @@ dictionary, program_languages =load_language_settings(program_language)
 DEFAULT_CONVERSATION_PERSONALITY = load_conversation_defaults(program_language)["DEFAULT_CONVERSATION_PERSONALITY"].strip()
 DEFAULT_STORY_DRAFT_PERSONALITY= load_story_draft_defaults(program_language)["DEFAULT_STORY_DRAFT_PERSONALITY"].strip()
 AUTHOR_INPUTS = dictionary['AUTHOR_INPUTS']
+ASSISTENT_CHAT=dictionary["ASSISTENT_CHAT"]
 TITLE_AND_PLOTS = dictionary['TITLE_AND_PLOTS']
 SCENES = dictionary['SCENES']
 PROGRAM_NAME=dictionary["PROGRAM_NAME"]
@@ -464,7 +533,7 @@ load_current_story_draft(story_id)
 st.title(f":books: {PROGRAM_NAME}")
 
 
-author_inputs, title_and_plots, scenes = st.tabs([AUTHOR_INPUTS, TITLE_AND_PLOTS, SCENES])
+assistent_chat, author_inputs, title_and_plots, scenes = st.tabs([ASSISTENT_CHAT, AUTHOR_INPUTS, TITLE_AND_PLOTS, SCENES])
  
 with author_inputs:
     st.header(AUTHOR_INPUTS)
@@ -495,17 +564,119 @@ for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# st.header("Czytaj zawartość strony internetowej")
+# url_input = st.text_input("Wprowadź adres URL:", "")
+
+# if st.button("Pobierz zawartość"):
+#     if url_input:
+#         content = read_website(url_input)
+#         st.text_area("Zawartość strony:", value=content, height=300)
+#     else:
+#         st.warning("Proszę wprowadzić adres URL.")
+
+# prompt = st.chat_input("O co chcesz spytać?")
+# if prompt:
+#     with st.chat_message("user"):
+#         st.markdown(prompt)
+
+#     st.session_state["messages"].append({"role": "user", "content": prompt})
+
+#     with st.chat_message("assistant"):
+#         response = chatbot_reply(prompt, memory=st.session_state["messages"][-10:])
+#         st.markdown(response["content"])
+
+#     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+#     save_current_conversation_messages()
+
+# st.header("Czytaj zawartość strony internetowej")
+# url_input = st.text_input("Wprowadź adres URL:", "")
+
+# content = ""
+# if st.button("Pobierz zawartość"):
+#     if url_input:
+#         content = read_website(url_input)
+#         st.text_area("Zawartość strony:", value=content, height=300)
+#     else:
+#         st.warning("Proszę wprowadzić adres URL.")
+
+# prompt = st.chat_input("O co chcesz spytać?")
+# if prompt:
+#     with st.chat_message("user"):
+#         st.markdown(prompt)
+
+#     st.session_state["messages"].append({"role": "user", "content": prompt})
+
+#     with st.chat_message("assistant"):
+#         response = chatbot_reply_with_context(prompt, content, memory=st.session_state["messages"][-10:])
+#         st.markdown(response["content"])
+
+#     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+#     save_current_conversation_messages()
+
+
+url_input = st.text_input("Wprowadź adres URL:", "")
+
+content = ""
+url = ""
+
+if "content_url" not in st.session_state:
+    st.session_state["content_url"] = content, url
+
+if st.button("Pobierz zawartość"):
+    if url_input:
+        content, url = read_website(url_input)
+        st.session_state["content_url"] = content, url
+        if url:
+            st.text_area("Zawartość strony:", value=content, height=300)
+        else:
+            st.warning("Nie udało się pobrać treści ze strony.")
+    else:
+        st.warning("Proszę wprowadzić adres URL.")
+
+
+
+# Kontynuuj z chatbotem
 prompt = st.chat_input("O co chcesz spytać?")
 if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
     st.session_state["messages"].append({"role": "user", "content": prompt})
-
+    content, url = st.session_state["content_url"] 
+    # Użyj URL jako kontekstu
+    context = f"URL: {url}\nTreść strony: {content}"
     with st.chat_message("assistant"):
-        response = chatbot_reply(prompt, memory=st.session_state["messages"][-10:])
-        st.markdown(response["content"])
+        response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
+    
+    
+    #     #st.markdown(response["content"])
+    #     st.markdown(
+    # f"""
+    # <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f1f1f1;">
+    #     <pre style="white-space: pre-wrap;">{response["content"]}</pre>
+    # </div>
+    # """,
+    # unsafe_allow_html=True)
+        
 
+    st.markdown(
+        f"""
+        <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+            <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{response["content"]}</pre>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Użycie st.markdown do stworzenia przewijalnego okna
+    st.markdown(
+        f"""
+        <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #333; color: white;">
+            <pre style="white-space: pre-wrap; color: white;">{response["content"]}</pre>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
     save_current_conversation_messages()
 

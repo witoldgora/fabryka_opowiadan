@@ -24,6 +24,7 @@
             "TITLE_AND_PLOTS": "العنوان وخطة القصة"
         },
         "English": {
+            "ASSISTENT_CHAT": "Assystant chat",
             "AUTHOR_INPUTS": "Story Sketch",
             "CHATBOT_PERSONALITY": "Chatbot personality",
             "CURRENT_SESSION": "Current session",
@@ -234,6 +235,7 @@
             "TITLE_AND_PLOTS": "Başlık ve Hikaye Özeti"
         },
         "polski": {
+            "ASSISTENT_CHAT": "Czat asystent",
             "AUTHOR_INPUTS": "Szkic opowieści",
             "CHATBOT_PERSONALITY": "Osobowość chatbota",
             "CURRENT_SESSION": "Aktualna sesja",
