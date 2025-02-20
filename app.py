@@ -535,150 +535,111 @@ st.title(f":books: {PROGRAM_NAME}")
 
 assistent_chat, author_inputs, title_and_plots, scenes = st.tabs([ASSISTENT_CHAT, AUTHOR_INPUTS, TITLE_AND_PLOTS, SCENES])
  
-with author_inputs:
-    st.header(AUTHOR_INPUTS)
-    uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
-    
-    if uploaded_file is not None:
-    # Odczytaj zawartość pliku
-        content = uploaded_file.read().decode("utf-8")
-    # Wyświetl zawartość pliku
-        st.text_area("Zawartość pliku:", value=content, height=300)
- 
-  
-    uploaded_files = st.file_uploader(LOAD_FILE_PROMPT, type='txt', help=LOAD_FILE_HELP, accept_multiple_files=True)
+with assistent_chat:
 
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            # Wyświetl nazwę pliku
-            st.write(f"**Załadowany plik:** {uploaded_file.name}")
+    for message in st.session_state["messages"]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-            # Zainicjalizuj przycisk do wyświetlenia zawartości
-            if st.button(f"Pokaż zawartość {uploaded_file.name}"):
-                # Odczytaj zawartość pliku
-                content = uploaded_file.read().decode("utf-8")
-                # Wyświetl zawartość pliku w nowym oknie (tekście)
-                st.text_area(f"Zawartość pliku: {uploaded_file.name}", value=content, height=300)
+    # st.header("Czytaj zawartość strony internetowej")
+    # url_input = st.text_input("Wprowadź adres URL:", "")
 
-for message in st.session_state["messages"]:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    # if st.button("Pobierz zawartość"):
+    #     if url_input:
+    #         content = read_website(url_input)
+    #         st.text_area("Zawartość strony:", value=content, height=300)
+    #     else:
+    #         st.warning("Proszę wprowadzić adres URL.")
 
-# st.header("Czytaj zawartość strony internetowej")
-# url_input = st.text_input("Wprowadź adres URL:", "")
+    # prompt = st.chat_input("O co chcesz spytać?")
+    # if prompt:
+    #     with st.chat_message("user"):
+    #         st.markdown(prompt)
 
-# if st.button("Pobierz zawartość"):
-#     if url_input:
-#         content = read_website(url_input)
-#         st.text_area("Zawartość strony:", value=content, height=300)
-#     else:
-#         st.warning("Proszę wprowadzić adres URL.")
+    #     st.session_state["messages"].append({"role": "user", "content": prompt})
 
-# prompt = st.chat_input("O co chcesz spytać?")
-# if prompt:
-#     with st.chat_message("user"):
-#         st.markdown(prompt)
+    #     with st.chat_message("assistant"):
+    #         response = chatbot_reply(prompt, memory=st.session_state["messages"][-10:])
+    #         st.markdown(response["content"])
 
-#     st.session_state["messages"].append({"role": "user", "content": prompt})
+    #     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+    #     save_current_conversation_messages()
 
-#     with st.chat_message("assistant"):
-#         response = chatbot_reply(prompt, memory=st.session_state["messages"][-10:])
-#         st.markdown(response["content"])
+    # st.header("Czytaj zawartość strony internetowej")
+    # url_input = st.text_input("Wprowadź adres URL:", "")
 
-#     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
-#     save_current_conversation_messages()
+    # content = ""
+    # if st.button("Pobierz zawartość"):
+    #     if url_input:
+    #         content = read_website(url_input)
+    #         st.text_area("Zawartość strony:", value=content, height=300)
+    #     else:
+    #         st.warning("Proszę wprowadzić adres URL.")
 
-# st.header("Czytaj zawartość strony internetowej")
-# url_input = st.text_input("Wprowadź adres URL:", "")
+    # prompt = st.chat_input("O co chcesz spytać?")
+    # if prompt:
+    #     with st.chat_message("user"):
+    #         st.markdown(prompt)
 
-# content = ""
-# if st.button("Pobierz zawartość"):
-#     if url_input:
-#         content = read_website(url_input)
-#         st.text_area("Zawartość strony:", value=content, height=300)
-#     else:
-#         st.warning("Proszę wprowadzić adres URL.")
+    #     st.session_state["messages"].append({"role": "user", "content": prompt})
 
-# prompt = st.chat_input("O co chcesz spytać?")
-# if prompt:
-#     with st.chat_message("user"):
-#         st.markdown(prompt)
+    #     with st.chat_message("assistant"):
+    #         response = chatbot_reply_with_context(prompt, content, memory=st.session_state["messages"][-10:])
+    #         st.markdown(response["content"])
 
-#     st.session_state["messages"].append({"role": "user", "content": prompt})
-
-#     with st.chat_message("assistant"):
-#         response = chatbot_reply_with_context(prompt, content, memory=st.session_state["messages"][-10:])
-#         st.markdown(response["content"])
-
-#     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
-#     save_current_conversation_messages()
-
-
-url_input = st.text_input("Wprowadź adres URL:", "")
-
-content = ""
-url = ""
-
-if "content_url" not in st.session_state:
-    st.session_state["content_url"] = content, url
-
-if st.button("Pobierz zawartość"):
-    if url_input:
-        content, url = read_website(url_input)
-        st.session_state["content_url"] = content, url
-        if url:
-            st.text_area("Zawartość strony:", value=content, height=300)
-        else:
-            st.warning("Nie udało się pobrać treści ze strony.")
-    else:
-        st.warning("Proszę wprowadzić adres URL.")
+    #     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+    #     save_current_conversation_messages()
 
 
 
-# Kontynuuj z chatbotem
-prompt = st.chat_input("O co chcesz spytać?")
-if prompt:
-    with st.chat_message("user"):
-        st.markdown(prompt)
 
-    st.session_state["messages"].append({"role": "user", "content": prompt})
-    content, url = st.session_state["content_url"] 
-    # Użyj URL jako kontekstu
-    context = f"URL: {url}\nTreść strony: {content}"
-    with st.chat_message("assistant"):
-        response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
-    
-    
-    #     #st.markdown(response["content"])
-    #     st.markdown(
-    # f"""
-    # <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f1f1f1;">
-    #     <pre style="white-space: pre-wrap;">{response["content"]}</pre>
-    # </div>
-    # """,
-    # unsafe_allow_html=True)
+
+    # Kontynuuj z chatbotem
+    prompt = st.chat_input("O co chcesz spytać?")
+    if prompt:
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        st.session_state["messages"].append({"role": "user", "content": prompt})
+        content, url = st.session_state["content_url"] 
+        # Użyj URL jako kontekstu
+        context = f"URL: {url}\nTreść strony: {content}"
+        with st.chat_message("assistant"):
+            response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
         
+        
+            st.markdown(response["content"])
 
-    st.markdown(
-        f"""
-        <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
-            <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{response["content"]}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        #     st.markdown(
+        # f"""
+        # <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f1f1f1;">
+        #     <pre style="white-space: pre-wrap;">{response["content"]}</pre>
+        # </div>
+        # """,
+        # unsafe_allow_html=True)
+            
 
-# Użycie st.markdown do stworzenia przewijalnego okna
-    st.markdown(
-        f"""
-        <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #333; color: white;">
-            <pre style="white-space: pre-wrap; color: white;">{response["content"]}</pre>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
-    save_current_conversation_messages()
+        # st.markdown(
+        #     f"""
+        #     <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+        #         <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{response["content"]}</pre>
+        #     </div>
+        #     """,
+        #     unsafe_allow_html=True
+        # )
+
+    # # Użycie st.markdown do stworzenia przewijalnego okna
+    #     st.markdown(
+    #         f"""
+    #         <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #333; color: white;">
+    #             <pre style="white-space: pre-wrap; color: white;">{response["content"]}</pre>
+    #         </div>
+    #         """,
+    #         unsafe_allow_html=True
+    #     )
+        st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+        save_current_conversation_messages()
+        st.rerun()
 
 with st.sidebar:
     st.subheader(CURRENT_SESSION)
@@ -775,3 +736,48 @@ if st.session_state["program_language"] != program_language:
     st.session_state["program_language"] = program_language
     save_current_conversation_language()
     st.rerun()
+
+with author_inputs:
+    st.header(AUTHOR_INPUTS)
+    uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
+    
+    if uploaded_file is not None:
+    # Odczytaj zawartość pliku
+        content = uploaded_file.read().decode("utf-8")
+    # Wyświetl zawartość pliku
+        st.text_area("Zawartość pliku:", value=content, height=300)
+ 
+  
+    uploaded_files = st.file_uploader(LOAD_FILE_PROMPT, type='txt', help=LOAD_FILE_HELP, accept_multiple_files=True)
+
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            # Wyświetl nazwę pliku
+            st.write(f"**Załadowany plik:** {uploaded_file.name}")
+
+            # Zainicjalizuj przycisk do wyświetlenia zawartości
+            if st.button(f"Pokaż zawartość {uploaded_file.name}"):
+                # Odczytaj zawartość pliku
+                content = uploaded_file.read().decode("utf-8")
+                # Wyświetl zawartość pliku w nowym oknie (tekście)
+                st.text_area(f"Zawartość pliku: {uploaded_file.name}", value=content, height=300)
+
+    url_input = st.text_input("Wprowadź adres URL:", "")
+
+    content = ""
+    url = ""
+
+    if "content_url" not in st.session_state:
+        st.session_state["content_url"] = content, url
+
+    if st.button("Pobierz zawartość"):
+        if url_input:
+            content, url = read_website(url_input)
+            st.session_state["content_url"] = content, url
+            if url:
+                st.text_area("Zawartość strony:", value=content, height=300)
+            else:
+                st.warning("Nie udało się pobrać treści ze strony.")
+        else:
+            st.warning("Proszę wprowadzić adres URL.")
+
