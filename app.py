@@ -8,7 +8,11 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
+should_rerun = False
+
 MAX_MESSAGES = None
+
+
 def chatbot_reply_with_context(user_prompt, context, memory):
     # dodaj system message
     messages = [
@@ -22,8 +26,6 @@ def chatbot_reply_with_context(user_prompt, context, memory):
     if context:
         messages.append({"role": "system", "content": context})
 
-
-
     # dodaj wszystkie wiadomości z pamięci
     for message in memory:
         messages.append({"role": message["role"], "content": message["content"]})
@@ -33,7 +35,9 @@ def chatbot_reply_with_context(user_prompt, context, memory):
 
     response = openai_client.chat.completions.create(
         model=MODEL,
-        messages=messages
+        messages=messages,
+        max_tokens=8192,
+        temperature=0.0,
     )
     usage = {}
     if response.usage: 
@@ -146,7 +150,9 @@ def chatbot_reply(user_prompt, memory):
 
     response = openai_client.chat.completions.create(
         model=MODEL,
-        messages=messages
+        messages=messages,
+        max_tokens=8192,
+        temperature=0.0,
     )
     usage = {}
     if response.usage: 
@@ -194,7 +200,8 @@ def load_conversation_to_state(conversation):
     st.session_state["messages"] = conversation["messages"]
     st.session_state["program_language"] = conversation["language"]
     st.session_state["chatbot_personality"] = conversation["chatbot_personality"]
-
+    #st.rerun()
+    should_rerun = True
 
 #load current story draft to state 
 def load_story_draft_to_state(story_draft):
@@ -202,7 +209,8 @@ def load_story_draft_to_state(story_draft):
     st.session_state["story_draft_name"] = story_draft["name"]
     st.session_state["story_draft_messages"] = story_draft["messages"]
     st.session_state["story_draft_chatbot_personality"] = story_draft["chatbot_personality"]
-
+    #st.rerun()
+    should_rerun = True
 
 def load_current_conversation():
     if not DB_PATH.exists():
@@ -240,6 +248,8 @@ def load_current_conversation():
             conversation = json.loads(f.read())
 
     load_conversation_to_state(conversation)
+    #st.rerun()
+    should_rerun = True
     return conversation_id
 
 #Load current story draft 
@@ -278,6 +288,7 @@ def load_current_story_draft(story_id):
         #... 
     load_story_draft_to_state(story_draft)
     #st.rerun()
+    should_rerun = True
 
 
 def save_current_conversation_messages():
@@ -413,7 +424,8 @@ def create_new_conversation():
         }, indent=4))
 
     load_conversation_to_state(conversation)
-    st.rerun()
+    #st.rerun()
+    should_rerun = True
 
 def create_new_story_draft():
     
@@ -440,7 +452,8 @@ def create_new_story_draft():
         }, indent=4))
 
     load_conversation_to_state(story_draft)
-    st.rerun()
+    #st.rerun()
+    should_rerun = True
 
 def switch_conversation(conversation_id):
     with open(DB_CONVERSATIONS_PATH / f"conversation_{conversation_id}.json", "r") as f:
@@ -452,7 +465,8 @@ def switch_conversation(conversation_id):
         }, indent=4))
 
     load_conversation_to_state(conversation)
-    st.rerun()
+    #st.rerun()
+    should_rerun = True
 
 
 def switch_story_draft(story_id):
@@ -465,7 +479,8 @@ def switch_story_draft(story_id):
         }, indent=4))
 
     load_conversation_to_state(story_draft)
-    st.rerun()
+    #st.rerun()
+    should_rerun = True
 
 def list_conversations():
     conversations = []
@@ -519,6 +534,7 @@ SESSION_NAME = dictionary["SESSION_NAME"]
 SESSION_COST_USD = dictionary["SESSION_COST_USD"]
 SESSION_COST_PLN = dictionary["SESSION_COST_PLN"]
 CHATBOT_PERSONALITY = dictionary["CHATBOT_PERSONALITY"]
+SELECT_AI_MODEL = dictionary["SELECT_AI_MODEL"]
 SESSION_LIST = dictionary["SESSION_LIST"]
 NEW_SESSION = dictionary["NEW_SESSION"]
 LOAD = dictionary["LOAD"]
@@ -594,52 +610,73 @@ with assistent_chat:
 
 
 
-    # Kontynuuj z chatbotem
-    prompt = st.chat_input("O co chcesz spytać?")
-    if prompt:
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    # # Kontynuuj z chatbotem
+    # prompt = st.chat_input("O co chcesz spytać?")
+    # if prompt:
+    #     with st.chat_message("user"):
+    #         st.markdown(prompt)
 
-        st.session_state["messages"].append({"role": "user", "content": prompt})
-        content, url = st.session_state["content_url"] 
-        # Użyj URL jako kontekstu
-        context = f"URL: {url}\nTreść strony: {content}"
-        with st.chat_message("assistant"):
-            response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
+    #     st.session_state["messages"].append({"role": "user", "content": prompt})
+    #     content, url = st.session_state["content_url"] 
+    #     # Użyj URL jako kontekstu
+    #     context = f"URL: {url}\nTreść strony: {content}"
+    #     with st.chat_message("assistant"):
+    #         response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
         
         
-            st.markdown(response["content"])
+    #         st.markdown(response["content"])
 
-        #     st.markdown(
-        # f"""
-        # <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f1f1f1;">
-        #     <pre style="white-space: pre-wrap;">{response["content"]}</pre>
-        # </div>
-        # """,
-        # unsafe_allow_html=True)
+    #     #     st.markdown(
+    #     # f"""
+    #     # <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #f1f1f1;">
+    #     #     <pre style="white-space: pre-wrap;">{response["content"]}</pre>
+    #     # </div>
+    #     # """,
+    #     # unsafe_allow_html=True)
             
 
-        # st.markdown(
-        #     f"""
-        #     <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
-        #         <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{response["content"]}</pre>
-        #     </div>
-        #     """,
-        #     unsafe_allow_html=True
-        # )
+    #     # st.markdown(
+    #     #     f"""
+    #     #     <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+    #     #         <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{response["content"]}</pre>
+    #     #     </div>
+    #     #     """,
+    #     #     unsafe_allow_html=True
+    #     # )
 
-    # # Użycie st.markdown do stworzenia przewijalnego okna
-    #     st.markdown(
-    #         f"""
-    #         <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #333; color: white;">
-    #             <pre style="white-space: pre-wrap; color: white;">{response["content"]}</pre>
-    #         </div>
-    #         """,
-    #         unsafe_allow_html=True
-    #     )
+    # # # Użycie st.markdown do stworzenia przewijalnego okna
+    # #     st.markdown(
+    # #         f"""
+    # #         <div style="height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #333; color: white;">
+    # #             <pre style="white-space: pre-wrap; color: white;">{response["content"]}</pre>
+    # #         </div>
+    # #         """,
+    # #         unsafe_allow_html=True
+    # #     )
+    #     st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+    #     save_current_conversation_messages()
+    #     #st.rerun()
+
+    prompt = st.chat_input("O co chcesz spytać?")
+    if prompt:
+        #with st.chat_message("user"):
+        #    st.markdown(prompt)
+
+        st.session_state["messages"].append({"role": "user", "content": prompt})
+        content, url = st.session_state["content_url"]
+        context = f"URL: {url}\nTreść strony: {content}"
+
+        response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
+
+        #with st.chat_message("assistant"):
+        #    st.markdown(response["content"])
+
         st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
         save_current_conversation_messages()
-        st.rerun()
+
+        # Ustaw tylko tu, jeżeli chcesz, aby było potrzebne rerun
+        should_rerun = True 
+        should_rerun = True
 
 with st.sidebar:
     st.subheader(CURRENT_SESSION)
@@ -649,7 +686,7 @@ with st.sidebar:
    
     # Nowa sekcja do wyboru modelu AI
     available_models = list(model_pricings.keys())  # Lista dostępnych modeli
-    selected_model = st.selectbox("Wybierz model AI", available_models, index=available_models.index("gpt-4o-mini"))
+    selected_model = st.selectbox(SELECT_AI_MODEL, available_models, index=available_models.index("gpt-4o-mini"))
 
     # Ustawienie modelu na podstawie wyboru użytkownika
     MODEL = selected_model
@@ -659,17 +696,32 @@ with st.sidebar:
 
     
     total_cost = 0
+    total_prompt_cost = 0
+    total_completion_cost = 0
+    total_prompt_tokens = 0 
+    total_completion_tokens = 0 
     for message in st.session_state.get("messages") or []:
         if "usage" in message:
             total_cost += message["usage"]["prompt_tokens"] * PRICING["input_tokens"]
             total_cost += message["usage"]["completion_tokens"] * PRICING["output_tokens"]
+            total_prompt_cost += message["usage"]["prompt_tokens"] * PRICING["input_tokens"]
+            total_completion_cost += message["usage"]["completion_tokens"] * PRICING["output_tokens"]
+
+
+            total_prompt_tokens += message["usage"]["prompt_tokens"] 
+            total_completion_tokens +=  message["usage"]["completion_tokens"] 
 
     c0, c1 = st.columns(2) 
     with c0: 
+        st.metric("total_prompt_cost", f"${total_prompt_cost:.4f}")
+        st.metric("total_completion_cost", f"${total_completion_cost:.4f}")
         st.metric(SESSION_COST_USD, f"${total_cost:.4f}") 
   
-    #with c1:
+    with c1:
     #    st.metric(SESSION_COST_PLN, f"{total_cost * USD_TO_PLN:.4f}")
+        st.metric("total_prompt_tokens", f"{total_prompt_tokens }")
+        st.metric("total_completion_tokens", f"{total_completion_tokens }")
+        st.metric("total_tokens", f"{total_prompt_tokens + total_completion_tokens }")
 
 
     # st.session_state["chatbot_personality"] = st.text_area(
@@ -696,7 +748,8 @@ with st.sidebar:
         st.session_state["new_chatbot_personality"] = default_personality
         save_current_conversation_personality()
         st.success("Osobowość chatbota została zresetowana.")
-        st.rerun()
+        #st.rerun()
+        should_rerun = True
 
     st.session_state["chatbot_personality"] = st.text_area(
         CHATBOT_PERSONALITY,
@@ -729,13 +782,16 @@ with st.sidebar:
         with c1:
             if st.button(LOAD, key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
                 switch_conversation(conversation["id"])
+                #st.rerun()
+                should_rerun = True
 
 
 
 if st.session_state["program_language"] != program_language:
     st.session_state["program_language"] = program_language
     save_current_conversation_language()
-    st.rerun()
+    #st.rerun()
+    should_rerun = True
 
 with author_inputs:
     st.header(AUTHOR_INPUTS)
@@ -780,4 +836,6 @@ with author_inputs:
                 st.warning("Nie udało się pobrać treści ze strony.")
         else:
             st.warning("Proszę wprowadzić adres URL.")
+
+if should_rerun: st.rerun()
 
