@@ -105,7 +105,60 @@ def chatbot_reply_with_context(user_prompt, context, memory):
         "content": response.choices[0].message.content,
         "usage": usage,
     }
+# Funkcja do wyświetlania wiadomości z przewijaniem
+def display_messages():
+    all_messages = ""
+    for msg in st.session_state["messages"]:
+        if msg["role"] == "user":
+            sender = "<div style='color: lightblue;'><strong>👤 User:</strong></div>"
+        else:
+            sender = "<div style='color: lightgreen;'><strong>🤖 Bot:</strong></div>"
 
+        content = f"<div>{msg['content']}</div>"
+        all_messages += f"{sender}{content}<br>"
+
+    # Wyświetlanie wiadomości w divie z przewijaniem
+    st.markdown(
+        f"""
+        <div id="chat" style="height: 1000px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+            <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{all_messages}</pre>
+        </div>
+        <script>
+            var chat = document.getElementById("chat");
+            chat.scrollTop = chat.scrollHeight;  // Przewiń na dół
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+    
+
+
+# Funkcja do wyświetlania wiadomości z przewijaniem
+def display_messages1():
+    all_messages = ""
+    # Odwróć kolejność wiadomości, aby najnowsze były na górze
+    for msg in reversed(st.session_state["messages"]):
+        if msg["role"] == "user":
+            sender = "<div style='color: lightblue;'><strong>👤 User:</strong></div>"
+        else:
+            sender = "<div style='color: lightgreen;'><strong>🤖 Bot:</strong></div>"
+
+        content = f"<div>{msg['content']}</div>"
+        all_messages += f"{sender}{content}<br>"
+
+    # Wyświetlanie wiadomości w divie z przewijaniem
+    st.markdown(
+        f"""
+        <div id="chat" style="height: 500px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+            <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{all_messages}</pre>
+        </div>
+        <script>
+            var chat = document.getElementById("chat");
+            chat.scrollTop = 0;  // Przewiń na górę
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 def read_website(url):
     try:
         response = requests.get(url)
@@ -205,7 +258,7 @@ def load_current_conversation():
         conversation_id = 1
         conversation = {
             "id": conversation_id,
-            "name": f"{SESSION} 1",
+            "name": f"{TEXT_SESSION} 1",
             "language": program_language,
             "chatbot_personality": TEXT_CONVERSATION_PERSONALITY,
             "messages": [],
@@ -399,7 +452,7 @@ def create_new_conversation():
     
     conversation = {
         "id": conversation_id,
-        "name": f"{SESSION} {conversation_id}",
+        "name": f"{TEXT_SESSION} {conversation_id}",
         "language": program_language,
         "chatbot_personality": personality,
         "messages": [],
@@ -566,14 +619,19 @@ TEXT_SESSION_COST_USD = dictionary["TEXT_SESSION_COST_USD"]
 TEXT_SESSION_COST_PLN = dictionary["TEXT_SESSION_COST_PLN"]
 TEXT_CHATBOT_PERSONALITY = dictionary["TEXT_CHATBOT_PERSONALITY"]
 TEXT_SELECT_AI_MODEL = dictionary["TEXT_SELECT_AI_MODEL"]
-TEXT_SELECT_AI_MODEL = dictionary["TEXT_SELECT_AI_MODEL"]
-NEW_SESSION = dictionary["NEW_SESSION"]
-LOAD = dictionary["LOAD"]
-SESSION = dictionary["SESSION"]
-LOAD_FILE_PROMPT = dictionary["LOAD_FILE_PROMPT"]
-LOAD_FILE_HELP = dictionary["LOAD_FILE_HELP"]
-FLAG = dictionary["FLAG"]
- 
+TEXT_SESSIONS_LIST = dictionary["TEXT_SESSIONS_LIST"]
+TEXT_NEW_SESSION = dictionary["TEXT_NEW_SESSION"]
+TEXT_LOAD = dictionary["TEXT_LOAD"]
+TEXT_SESSION = dictionary["TEXT_SESSION"]
+TEXT_LOAD_FILE_PROMPT = dictionary["TEXT_LOAD_FILE_PROMPT"]
+TEXT_LOAD_FILE_HELP = dictionary["TEXT_LOAD_FILE_HELP"]
+TEXT_FLAG = dictionary["TEXT_FLAG"]
+TEXT_SET_TEMPERATURE = dictionary["TEXT_SET_TEMPERATURE"]
+TEXT_MAX_TOKENS = dictionary["TEXT_MAX_TOKENS"] 
+TEXT_TOP_P = dictionary["TEXT_TOP_P"]
+TEXT_FREQUENCY_PENALTY = dictionary["TEXT_FREQUENCY_PENALTY"]
+TEXT_PPRESENCE_PENALTY = dictionary["TEXT_PPRESENCE_PENALTY"]
+
 story_id=load_current_conversation()
 load_current_story_draft(story_id)
 
@@ -582,39 +640,11 @@ st.title(f":books: {TEXT_PROGRAM_NAME}")
 
 assistent_chat, author_inputs, title_and_plots, scenes = st.tabs([TEXT_ASSISTENT_CHAT, TEXT_AUTHOR_INPUTS, TEXT_TITLE_AND_PLOTS, TEXT_SCENES])
  
-with assistent_chat:
-
-    for message in st.session_state["messages"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
- 
-    prompt = st.chat_input("O co chcesz spytać?")
-    if prompt:
-        #with st.chat_message("user"):
-        #    st.markdown(prompt)
-
-        st.session_state["messages"].append({"role": "user", "content": prompt})
-        content, url = st.session_state["content_url"]
-        context = f"URL: {url}\nTreść strony: {content}"
-
-        response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
-
-        #with st.chat_message("assistant"):
-        #    st.markdown(response["content"])
-
-        st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
-        save_current_conversation_messages()
-        
-        # Ustaw tylko tu, jeżeli chcesz, aby było potrzebne rerun
-        should_rerun = True 
-        
-
 with st.sidebar:
     st.subheader(TEXT_CURRENT_SESSION)
    #select language  
      
-    program_language = st.selectbox(f"{FLAG} {TEXT_SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
+    program_language = st.selectbox(f"{TEXT_FLAG} {TEXT_SELECT_LANGUAGE}", program_languages, index=list(program_languages).index(program_language))
     if st.session_state["program_language"] != program_language:
         st.session_state["program_language"] = program_language
         save_current_conversation_language()
@@ -625,7 +655,7 @@ with st.sidebar:
     available_models = list(model_pricings.keys())  # Lista dostępnych modeli
     ai_model = st.selectbox(TEXT_SELECT_AI_MODEL, available_models, index=available_models.index("gpt-4o-mini"))
 
-    
+     
 
     # Ustawienie modelu na podstawie wyboru użytkownika
     #DEFAULT_AI_MODEL = ai_model
@@ -664,22 +694,22 @@ with st.sidebar:
 
 
     # Suwak do ustawiania temperatury
-    assistant_temperature = st.slider("Ustaw temperaturę", min_value=0.0, max_value=1.0, value=DEFAULT_TEMPERATURE, step=0.1)
+    assistant_temperature = st.slider(TEXT_SET_TEMPERATURE, min_value=0.0, max_value=1.0, value=DEFAULT_TEMPERATURE, step=0.1)
 
     # Suwak do ustawiania maksymalnej liczby tokenów
-    max_tokens = st.slider("Maksymalna liczba tokenów", min_value=10, max_value=DEFAULT_MAX_TOKENS, value=DEFAULT_TOKENS)
+    max_tokens = st.slider(TEXT_MAX_TOKENS, min_value=10, max_value=DEFAULT_MAX_TOKENS, value=DEFAULT_TOKENS)
 
     # Suwak do ustawiania top-p (nucleus sampling)
-    top_p = st.slider("Top-p (Nucleus Sampling)", min_value=0.0, max_value=DEFAULT_MAX_TOP_P, value=DEFAULT_TOP_P, step=0.05)
+    top_p = st.slider(TEXT_TOP_P, min_value=0.0, max_value=DEFAULT_MAX_TOP_P, value=DEFAULT_TOP_P, step=0.05)
 
     # Suwak do ustawiania top-k
     #top_k = st.slider("Top-k", min_value=1, max_value=100, value=50)
 
     # Suwak do częstotliwości kary
-    frequency_penalty = st.slider("Kara za częstotliwość", min_value=DEFAULT_MIN_FREQUENCY_PENALTY, max_value=DEFAULT_MAX_FREQUENCY_PENALTY, value=DEFAULT_FREQUENCY_PENALTY, step=0.1)
+    frequency_penalty = st.slider(TEXT_FREQUENCY_PENALTY, min_value=DEFAULT_MIN_FREQUENCY_PENALTY, max_value=DEFAULT_MAX_FREQUENCY_PENALTY, value=DEFAULT_FREQUENCY_PENALTY, step=0.1)
 
     # Suwak do kary za obecność
-    presence_penalty = st.slider("Kara za obecność", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    presence_penalty = st.slider(TEXT_PPRESENCE_PENALTY, min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
 
     
 
@@ -690,8 +720,10 @@ with st.sidebar:
         st.session_state["chatbot_personality"] = default_personality
         # Bezpośrednio zaktualizuj wartość w text_area
         st.session_state["new_chatbot_personality"] = default_personality
+        #st.rerun()
         save_current_conversation_personality()
         st.success("Osobowość chatbota została zresetowana.")
+        time.sleep(1)
         #st.rerun()
         should_rerun = True
 
@@ -711,8 +743,8 @@ with st.sidebar:
         on_change=save_current_conversation_name,
     )
 
-    st.subheader(TEXT_SELECT_AI_MODEL)
-    if st.button(NEW_SESSION):
+    st.subheader(TEXT_SESSIONS_LIST)
+    if st.button(TEXT_NEW_SESSION):
         create_new_conversation()
         #st.rerun()
         should_rerun = True
@@ -726,16 +758,142 @@ with st.sidebar:
             st.write(conversation["name"])
 
         with c1:
-            if st.button(LOAD, key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
+            if st.button(TEXT_LOAD, key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
                 switch_conversation(conversation["id"])
                 #st.rerun()
                 should_rerun = True
 
-   
+
+with assistent_chat:
+
+    # for message in st.session_state["messages"]:
+    #     with st.chat_message(message["role"]):
+    #         st.markdown(message["content"])
+
+    # all_messages = ""
+    # for i, msg in enumerate(st.session_state["messages"]):
+    #     sender = "User" if i % 2 == 0 else "Bot"  # Przykładowe przypisanie nadawcy
+    #     all_messages += f"**{sender}:** {msg}\n\n"
+
+    # all_messages = ""
+    # for msg in st.session_state["messages"]:
+    #     sender = "User" if msg["role"] == "user" else "Bot"
+    #     all_messages += f"**{sender}:** {msg['content']}\n\n"
+    # all_messages = ""
+    # for msg in st.session_state["messages"]:
+    #     if msg["role"] == "user":
+    #         sender = "\n👤 User\n"
+    #     else:
+    #         sender = "\n🤖 Bot\n"
+    #     all_messages += f"**{sender}:** {msg['content']}\n\n"
+    # #all_messages = "\n\n".join([msg['content'] for msg in st.session_state["messages"]])
+
+    # all_messages = ""
+    # for msg in st.session_state["messages"]:
+    #     if msg["role"] == "user":
+    #         sender = "\n\n👤 User\n\n"
+    #     else:
+    #         sender = "\n\n🤖 Bot\n\n"
+    #     all_messages += f"{sender}{msg['content']}" 
+
+    # all_messages = ""
+    # for msg in st.session_state["messages"]:
+    #     if msg["role"] == "user":
+    #         sender = "<div style='color: blue;'><strong>👤 User:</strong></div>"
+    #     else:
+    #         sender = "<div style='color: green;'><strong>🤖 Bot:</strong></div>"
+    #     all_messages += f"{sender}<div>{msg['content']}</div><br><br>"
+
+    # all_messages = ""
+    # for msg in st.session_state["messages"]:
+    #     if msg["role"] == "user":
+    #         sender = "<div style='color: blue;'><strong>👤 User:</strong></div>"
+    #         content = f"<div style='color: lightblue;'>{msg['content']}</div>"
+    #     else:
+    #         sender = "<div style='color: green;'><strong>🤖 Bot:</strong></div>"
+    #         content = f"<div style='color: lightgreen;'>{msg['content']}</div>"
+
+    #     all_messages += f"{sender}{content}<br><br>"
+    all_messages = ""
+    for msg in st.session_state["messages"]:
+        if msg["role"] == "user":
+            sender = "<div style='color: lightblue;'><strong>👤 User:</strong></div>"
+            content = f"<div style='color: lightblue;'>{msg['content']}</div>"
+        else:
+            sender = "<div style='color: lightgreen;'><strong>🤖 Bot:</strong></div>"
+            content = f"<div style='color: lightgreen;'>{msg['content']}</div>"
+
+        all_messages += f"{sender}{content}<br>"
+
+
+
+    # st.markdown(
+    #     f"""
+    #     <div style="height: 700px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+    #         <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{all_messages}</pre>
+    #     </div>
+    #     """,
+    #     unsafe_allow_html=True
+    # )
+    # st.markdown(
+    #     f"""
+    #     <div id="chat" style="height: 700px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background-color: #2e2e2e; color: white;">
+    #         <pre style="white-space: pre-wrap; font-family: monospace; color: white;">{all_messages}</pre>
+    #     </div>
+    #     <script>
+    #         var chat = document.getElementById("chat");
+    #         chat.scrollTop = chat.scrollHeight;  // Przewiń na dół
+    #     </script>
+    #     """,
+#         unsafe_allow_html=True
+# ) 
+
+    # Wywołanie funkcji do wyświetlania wiadomości
+    #st.rerun()
+    #display_messages() 
+    # if "last_query" in st.session_state:
+    #     last_query = st.session_state["last_query"]
+    #     # Ogranicz długość do 2 linii
+    #     last_query_display = '\n'.join(last_query.splitlines()[:2])  # Weź tylko 2 linie
+    #     st.info(f"**Ostatnie zapytanie:** {last_query_display}")
+ # Wyciągnij ostatnie zapytanie z st.session_state["messages"]
+    if st.session_state["messages"]:
+        # Przeszukaj wiadomości, aby znaleźć ostatnie zapytanie od użytkownika
+        last_user_query = next((msg["content"] for msg in reversed(st.session_state["messages"]) if msg["role"] == "user"), None)
+
+        if last_user_query:
+            # Ogranicz długość do 2 linii
+            last_query_display = '\n'.join(last_user_query.splitlines()[:2])  # Weź tylko 2 linie
+            st.info(f"**Ostatnie zapytanie:** {last_query_display}")       
+    display_messages1() 
+
+    prompt = st.chat_input("O co chcesz spytać?")
+    if prompt:
+        #with st.chat_message("user"):
+        #    st.markdown(prompt)
+        # Zapisz zapytanie w stanie sesji
+        st.session_state["last_query"] = prompt
+
+        st.session_state["messages"].append({"role": "user", "content": prompt})
+        content, url = st.session_state["content_url"]
+        context = f"URL: {url}\nTreść strony: {content}"
+
+        response = chatbot_reply_with_context(prompt, context, memory=st.session_state["messages"][MAX_MESSAGES:])
+
+        #with st.chat_message("assistant"):
+        #    st.markdown(response["content"])
+
+        st.session_state["messages"].append({"role": "assistant", "content": response["content"], "usage": response["usage"]})
+        save_current_conversation_messages()
+        
+        # Ustaw tylko tu, jeżeli chcesz, aby było potrzebne rerun
+        should_rerun = True 
+        #st.rerun()
+  
 
 with author_inputs:
     st.header(TEXT_AUTHOR_INPUTS)
-    uploaded_file=st.file_uploader(LOAD_FILE_PROMPT, type='txt',help=LOAD_FILE_HELP) 
+    uploaded_file=st.file_uploader(TEXT_LOAD_FILE_PROMPT, type='txt',help=TEXT_LOAD_FILE_HELP) 
     
     if uploaded_file is not None:
     # Odczytaj zawartość pliku
@@ -744,7 +902,7 @@ with author_inputs:
         st.text_area("Zawartość pliku:", value=content, height=300)
  
   
-    uploaded_files = st.file_uploader(LOAD_FILE_PROMPT, type='txt', help=LOAD_FILE_HELP, accept_multiple_files=True)
+    uploaded_files = st.file_uploader(TEXT_LOAD_FILE_PROMPT, type='txt', help=TEXT_LOAD_FILE_HELP, accept_multiple_files=True)
 
     if uploaded_files:
         for uploaded_file in uploaded_files:
@@ -776,10 +934,6 @@ with author_inputs:
                 st.warning("Nie udało się pobrać treści ze strony.")
         else:
             st.warning("Proszę wprowadzić adres URL.")
-
-    
-
-
 
 
 st.session_state["ai_model"] = ai_model
