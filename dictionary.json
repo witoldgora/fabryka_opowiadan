@@ -72,7 +72,8 @@
             "TEXT_SCENES": "Scenes",
             "TEXT_SET_TEMPERATURE":"Set temperature",            
             "TEXT_TITLE_AND_PLOTS": "Title and Plot Overview",
-            "TEXT_TOP_P":"Top-p (Nucleus Sampling)"
+            "TEXT_TOP_P":"Top-p (Nucleus Sampling)",
+            "TEXT_PROMPT":"How can I help you?"
         },
         "Español": {
             "TEXT_AUTHOR_INPUTS": "Borrador de historia",
@@ -259,7 +260,8 @@
             "TEXT_SCENES": "Sceny",
             "TEXT_SET_TEMPERATURE":"Ustaw temperaturę",
             "TEXT_TITLE_AND_PLOTS": "Tytuł i zarys fabuły",
-            "TEXT_TOP_P":"Top-p (Nucleus Sampling)"
+            "TEXT_TOP_P":"Top-p (Nucleus Sampling)",
+            "TEXT_PROMPT":"Jak mogę Ci pomóc?"
         }
     }
 }
