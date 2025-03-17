@@ -857,6 +857,8 @@ with assistent_chat:
     #     last_query_display = '\n'.join(last_query.splitlines()[:2])  # Weź tylko 2 linie
     #     st.info(f"**Ostatnie zapytanie:** {last_query_display}")
  # Wyciągnij ostatnie zapytanie z st.session_state["messages"]
+
+    prompt = st.chat_input("O co chcesz spytać?")
     if st.session_state["messages"]:
         # Przeszukaj wiadomości, aby znaleźć ostatnie zapytanie od użytkownika
         last_user_query = next((msg["content"] for msg in reversed(st.session_state["messages"]) if msg["role"] == "user"), None)
@@ -864,10 +866,13 @@ with assistent_chat:
         if last_user_query:
             # Ogranicz długość do 2 linii
             last_query_display = '\n'.join(last_user_query.splitlines()[:2])  # Weź tylko 2 linie
-            st.info(f"**Ostatnie zapytanie:** {last_query_display}")       
+            #st.info(f"**Ostatnie zapytanie:** {last_query_display}")       
+            st.markdown("**Ostatnie zapytanie:**")
+            st.info(f"{last_query_display}")
+    st.markdown("**Historia konwersacji**")
     display_messages1() 
 
-    prompt = st.chat_input("O co chcesz spytać?")
+    #prompt = st.chat_input("O co chcesz spytać?")
     if prompt:
         #with st.chat_message("user"):
         #    st.markdown(prompt)
@@ -935,7 +940,7 @@ with author_inputs:
         else:
             st.warning("Proszę wprowadzić adres URL.")
 
-
+        
 st.session_state["ai_model"] = ai_model
 st.session_state["assistant_temperature"] = assistant_temperature
 st.session_state["max_tokens"] = max_tokens
