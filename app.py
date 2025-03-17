@@ -631,7 +631,7 @@ TEXT_MAX_TOKENS = dictionary["TEXT_MAX_TOKENS"]
 TEXT_TOP_P = dictionary["TEXT_TOP_P"]
 TEXT_FREQUENCY_PENALTY = dictionary["TEXT_FREQUENCY_PENALTY"]
 TEXT_PPRESENCE_PENALTY = dictionary["TEXT_PPRESENCE_PENALTY"]
-TEXT_PROMPT = dictionary["TEXT_PROMPT"]
+TEXT_PROMPT_REQUEST = dictionary["TEXT_PROMPT_REQUEST"]
 
 story_id=load_current_conversation()
 load_current_story_draft(story_id)
@@ -859,7 +859,7 @@ with assistent_chat:
     #     st.info(f"**Ostatnie zapytanie:** {last_query_display}")
  # Wyciągnij ostatnie zapytanie z st.session_state["messages"]
 
-    prompt = st.chat_input(TEXT_PROMPT)
+    prompt = st.chat_input(TEXT_PROMPT_REQUEST)
     if st.session_state["messages"]:
         # Przeszukaj wiadomości, aby znaleźć ostatnie zapytanie od użytkownika
         last_user_query = next((msg["content"] for msg in reversed(st.session_state["messages"]) if msg["role"] == "user"), None)
